@@ -1,0 +1,344 @@
+openapi: 3.0.3
+info:
+  title: EcoLogistics API
+  description: |
+    API REST para gestión de envíos - EcoLogistics S.A.
+    
+    Solución de integración funcional que:
+    1. Lee datos de archivo local envios.csv (patrón File Transfer)
+    2. Transforma los datos a formato JSON estandarizado
+    3. Expone API RESTful documentada con OpenAPI
+    4. Demuestra transición de enfoque clásico a modelo moderno
+    
+    Especificación técnica implementada según contrato de entrega.
+    
+  version: 1.0.0
+  contact:
+    name: EcoLogistics S.A. - Gerencia de TI
+    email: ti@ecologistics.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Servidor de desarrollo local según especificación
+
+paths:
+  /envios:
+    get:
+      summary: Lista todos los envíos
+      description: Obtiene la lista completa de envíos cargados desde el archivo CSV
+      tags:
+        - Envíos
+      responses:
+        '200':
+          description: Lista de envíos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnvioSpec'
+              example:
+                - id: "001"
+                  cliente: "Juan Pérez"
+                  direccion: "Calle 12 #45"
+                  estado: "Entregado"
+                - id: "002"
+                  cliente: "María Gómez"
+                  direccion: "Avenida 10 #33"
+                  estado: "En tránsito"
+        '500':
+          description: Error interno del servidor
+          
+    post:
+      summary: Registra un nuevo envío
+      description: Registra un nuevo envío en el sistema (almacenado en memoria)
+      tags:
+        - Envíos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvioSpecRequest'
+            example:
+              cliente: "Carlos López"
+              direccion: "Carrera 15 #88"
+              estado: "Pendiente"
+      responses:
+        '201':
+          description: Envío registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvioSpec'
+              example:
+                id: "004"
+                cliente: "Carlos López"
+                direccion: "Carrera 15 #88"
+                estado: "Pendiente"
+        '400':
+          description: Datos de entrada inválidos
+        '500':
+          description: Error interno del servidor
+
+  /envios/{id}:
+    get:
+      summary: Obtiene un envío específico
+      description: Obtiene los detalles de un envío específico por su ID
+      tags:
+        - Envíos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID único del envío
+          schema:
+            type: string
+            example: "001"
+      responses:
+        '200':
+          description: Envío encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvioSpec'
+              example:
+                id: "001"
+                cliente: "Juan Pérez"
+                direccion: "Calle 12 #45"
+                estado: "Entregado"
+        '404':
+          description: Envío no encontrado
+        '500':
+          description: Error interno del servidor
+
+  /vehiculos:
+    get:
+      summary: Listar todos los vehículos
+      description: Obtiene la lista completa de vehículos registrados
+      tags:
+        - Vehículos
+      responses:
+        '200':
+          description: Lista de vehículos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehiculo'
+        '500':
+          description: Error interno del servidor
+          
+    post:
+      summary: Registrar nuevo vehículo
+      description: Registra un nuevo vehículo en la flota
+      tags:
+        - Vehículos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehiculoRequest'
+      responses:
+        '201':
+          description: Vehículo registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehiculoResponse'
+        '400':
+          description: Datos de entrada inválidos
+        '500':
+          description: Error interno del servidor
+
+  /vehiculos/disponibles:
+    get:
+      summary: Obtener vehículos disponibles
+      description: Obtiene la lista de vehículos disponibles para asignación
+      tags:
+        - Vehículos
+      responses:
+        '200':
+          description: Lista de vehículos disponibles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehiculo'
+        '500':
+          description: Error interno del servidor
+
+components:
+  schemas:
+    EnvioSpec:
+      type: object
+      description: Estructura JSON estandarizada según especificación técnica
+      required:
+        - id
+        - cliente
+        - direccion
+        - estado
+      properties:
+        id:
+          type: string
+          description: ID único del envío (formato numérico con ceros a la izquierda)
+          example: "001"
+        cliente:
+          type: string
+          description: Nombre del cliente
+          example: "Juan Pérez"
+        direccion:
+          type: string
+          description: Dirección de entrega
+          example: "Calle 12 #45"
+        estado:
+          type: string
+          description: Estado actual del envío
+          enum: ["Entregado", "En tránsito", "Pendiente"]
+          example: "Entregado"
+
+    EnvioSpecRequest:
+      type: object
+      description: Datos requeridos para registrar un nuevo envío
+      required:
+        - cliente
+        - direccion
+        - estado
+      properties:
+        cliente:
+          type: string
+          description: Nombre del cliente
+          minLength: 3
+          maxLength: 100
+          example: "Carlos López"
+        direccion:
+          type: string
+          description: Dirección de entrega
+          minLength: 5
+          maxLength: 200
+          example: "Carrera 15 #88"
+        estado:
+          type: string
+          description: Estado inicial del envío
+          enum: ["Entregado", "En tránsito", "Pendiente"]
+          example: "Pendiente"
+
+    EnvioResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID único del envío creado
+          example: "ENV001"
+        estado:
+          type: string
+          description: Estado del envío
+          example: "CREADO"
+        fechaCreacion:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación
+          example: "2025-10-29T10:30:00"
+        mensaje:
+          type: string
+          description: Mensaje de confirmación
+          example: "Envío creado exitosamente"
+
+    Vehiculo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID único del vehículo
+          example: "VEH001"
+        placa:
+          type: string
+          description: Placa del vehículo
+          example: "ABC123"
+        tipo:
+          type: string
+          enum: [CAMION, FURGONETA, MOTOCICLETA, VEHICULO_LIGERO]
+          description: Tipo de vehículo
+          example: "CAMION"
+        capacidad:
+          type: number
+          format: double
+          description: Capacidad de carga en kilogramos
+          example: 1500.0
+        estado:
+          type: string
+          enum: [DISPONIBLE, EN_RUTA, MANTENIMIENTO, FUERA_DE_SERVICIO]
+          description: Estado actual del vehículo
+          example: "DISPONIBLE"
+        conductor:
+          type: string
+          description: Nombre del conductor asignado
+          example: "Juan Pérez"
+        ubicacionActual:
+          type: string
+          description: Ubicación actual del vehículo
+          example: "Bogotá"
+
+    VehiculoRequest:
+      type: object
+      required:
+        - placa
+        - tipo
+        - capacidad
+        - conductor
+      properties:
+        placa:
+          type: string
+          description: Placa del vehículo
+          pattern: '^[A-Z]{3}[0-9]{3}$'
+          example: "ABC123"
+        tipo:
+          type: string
+          enum: [CAMION, FURGONETA, MOTOCICLETA, VEHICULO_LIGERO]
+          description: Tipo de vehículo
+          example: "CAMION"
+        capacidad:
+          type: number
+          format: double
+          description: Capacidad de carga en kilogramos
+          minimum: 50
+          maximum: 50000
+          example: 1500.0
+        conductor:
+          type: string
+          description: Nombre del conductor asignado
+          minLength: 3
+          maxLength: 100
+          example: "Juan Pérez"
+        ubicacionActual:
+          type: string
+          description: Ubicación inicial del vehículo
+          example: "Bogotá"
+
+    VehiculoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID único del vehículo registrado
+          example: "VEH001"
+        estado:
+          type: string
+          description: Estado del vehículo
+          example: "REGISTRADO"
+        mensaje:
+          type: string
+          description: Mensaje de confirmación
+          example: "Vehículo registrado exitosamente"
+
+tags:
+  - name: Envíos
+    description: Operaciones relacionadas con la gestión de envíos
+  - name: Vehículos
+    description: Operaciones relacionadas con la gestión de vehículos
