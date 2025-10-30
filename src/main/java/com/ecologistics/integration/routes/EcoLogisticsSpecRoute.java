@@ -67,6 +67,15 @@ public class EcoLogisticsSpecRoute extends RouteBuilder {
                 .responseMessage().code(404).message("Envío no encontrado").endResponseMessage()
                 .to("direct:obtener-envio-spec");
 
+        // Endpoint de salud
+        rest("/health").description("Health Check - Estado del sistema")
+            .produces("application/json")
+            
+            .get()
+                .description("Verificar estado del sistema")
+                .responseMessage().code(200).message("Sistema operativo").endResponseMessage()
+                .to("direct:health-check");
+
         // Ruta de inicio: Leer archivo CSV y transformar a JSON
         from("timer://inicio?delay=2000&repeatCount=1")
             .routeId("csv-to-json-route")
@@ -172,6 +181,22 @@ public class EcoLogisticsSpecRoute extends RouteBuilder {
                     exchange.getIn().setHeader(exchange.HTTP_RESPONSE_CODE, 404);
                     System.out.println("[WARN] Envío no encontrado: " + envioId);
                 }
+            });
+
+        // GET /health - Health Check
+        from("direct:health-check")
+            .log("[INFO] Solicitud GET /health recibida")
+            .process(exchange -> {
+                java.util.Map<String, Object> healthStatus = new java.util.HashMap<>();
+                healthStatus.put("status", "UP");
+                healthStatus.put("application", "EcoLogistics Integration System");
+                healthStatus.put("version", "1.0.0");
+                healthStatus.put("timestamp", java.time.LocalDateTime.now().toString());
+                healthStatus.put("enviosCount", envioService.getTotalEnvios());
+                
+                exchange.getIn().setBody(healthStatus);
+                exchange.getIn().setHeader("Content-Type", "application/json");
+                System.out.println("[INFO] Health check - Sistema operativo");
             });
     }
 }

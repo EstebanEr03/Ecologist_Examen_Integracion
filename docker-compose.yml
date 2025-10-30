@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  ecologistics-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecologistics-integration
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_APPLICATION_NAME=ecologistics-integration
+      - SERVER_PORT=8082
+      - JAVA_OPTS=-Xmx512m -Xms256m
+    volumes:
+      - ./envios.csv:/app/envios.csv:ro
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - ecologistics-network
+
+networks:
+  ecologistics-network:
+    driver: bridge

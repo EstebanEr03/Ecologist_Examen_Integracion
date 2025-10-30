@@ -1,0 +1,381 @@
+{
+	"info": {
+		"_postman_id": "ecologistics-api-collection",
+		"name": "EcoLogistics API - Gestión de Envíos",
+		"description": "Colección de pruebas para la API REST de EcoLogistics S.A.\n\nSistema de integración que moderniza el proceso de gestión de envíos desde archivos CSV hacia APIs RESTful.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "ecologistics-sa"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "GET /health - Verificar estado del sistema",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response es JSON\", function () {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Sistema está UP\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(\"UP\");",
+									"});",
+									"",
+									"pm.test(\"Contiene información de la aplicación\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('application');",
+									"    pm.expect(jsonData).to.have.property('version');",
+									"    pm.expect(jsonData).to.have.property('timestamp');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"health"
+							]
+						},
+						"description": "Endpoint de salud que verifica el estado del sistema y retorna información básica de la aplicación."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Gestión de Envíos",
+			"item": [
+				{
+					"name": "GET /envios - Listar todos los envíos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response es un array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Contiene al menos 3 envíos del CSV\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.be.at.least(3);",
+									"});",
+									"",
+									"pm.test(\"Cada envío tiene estructura correcta\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    jsonData.forEach(function(envio) {",
+									"        pm.expect(envio).to.have.property('id');",
+									"        pm.expect(envio).to.have.property('cliente');",
+									"        pm.expect(envio).to.have.property('direccion');",
+									"        pm.expect(envio).to.have.property('estado');",
+									"    });",
+									"});",
+									"",
+									"// Guardar el primer ID para pruebas posteriores",
+									"if (pm.response.json().length > 0) {",
+									"    pm.environment.set(\"envio_id\", pm.response.json()[0].id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/envios",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"envios"
+							]
+						},
+						"description": "Obtiene la lista completa de todos los envíos registrados en el sistema."
+					},
+					"response": []
+				},
+				{
+					"name": "GET /envios/{id} - Obtener envío específico",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response es un objeto JSON\", function () {",
+									"    pm.response.to.be.json;",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('object');",
+									"});",
+									"",
+									"pm.test(\"Envío tiene estructura correcta\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('cliente');",
+									"    pm.expect(jsonData).to.have.property('direccion');",
+									"    pm.expect(jsonData).to.have.property('estado');",
+									"});",
+									"",
+									"pm.test(\"ID coincide con el solicitado\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.eql(\"001\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/envios/001",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"envios",
+								"001"
+							]
+						},
+						"description": "Obtiene un envío específico por su ID."
+					},
+					"response": []
+				},
+				{
+					"name": "POST /envios - Crear nuevo envío",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response es JSON\", function () {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Envío creado tiene ID asignado\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData.id).to.not.be.empty;",
+									"});",
+									"",
+									"pm.test(\"Datos del envío coinciden\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.cliente).to.eql(\"Carlos Ramírez\");",
+									"    pm.expect(jsonData.direccion).to.eql(\"Avenida 50 #100\");",
+									"    pm.expect(jsonData.estado).to.eql(\"En preparación\");",
+									"});",
+									"",
+									"// Guardar ID del nuevo envío",
+									"pm.environment.set(\"nuevo_envio_id\", pm.response.json().id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cliente\": \"Carlos Ramírez\",\n    \"direccion\": \"Avenida 50 #100\",\n    \"estado\": \"En preparación\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/envios",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"envios"
+							]
+						},
+						"description": "Registra un nuevo envío en el sistema. El ID se genera automáticamente."
+					},
+					"response": []
+				},
+				{
+					"name": "GET /envios/{id} - Envío no existente (404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Response contiene mensaje de error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/envios/999",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"envios",
+								"999"
+							]
+						},
+						"description": "Prueba el manejo de errores cuando se solicita un envío que no existe."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Documentación",
+			"item": [
+				{
+					"name": "GET /api-doc - Documentación OpenAPI",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code es 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response es JSON\", function () {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Contiene especificación OpenAPI\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('openapi');",
+									"    pm.expect(jsonData).to.have.property('info');",
+									"    pm.expect(jsonData).to.have.property('paths');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/api-doc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"api-doc"
+							]
+						},
+						"description": "Obtiene la documentación completa de la API en formato OpenAPI 3.0."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8082",
+			"type": "string"
+		}
+	]
+}
